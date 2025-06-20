@@ -1,0 +1,327 @@
+
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcard Học Chữ</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f8ff; /* AliceBlue */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden; /* Prevent scrollbar from animation */
+        }
+
+        /* Flashcard Container */
+        .flashcard-container {
+            perspective: 1000px; /* For 3D flip effect */
+            width: 320px; /* Base width for card */
+            height: 520px; /* Increased height to accommodate stroke order */
+            max-width: 90vw; /* Responsive width */
+            max-height: 90vh; /* Responsive height */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column; /* For stacking card and controls */
+        }
+
+        /* Flashcard */
+        .flashcard {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.8s;
+            cursor: pointer; /* Indicate it's clickable */
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2); /* Soft shadow */
+            border-radius: 20px; /* Rounded corners for the card */
+        }
+
+        /* Flipped state */
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+
+        /* Front and Back of the card */
+        .flashcard-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden; /* Hide the back when facing away */
+            display: flex;
+            flex-direction: column; /* Allow stacking elements */
+            justify-content: center;
+            align-items: center;
+            border-radius: 20px; /* Rounded corners for faces */
+            padding: 20px;
+            text-align: center;
+            background-color: #ffffff; /* White background */
+        }
+
+        .flashcard-front {
+            background-color: #e0f2fe; /* Light blue for front */
+            color: #1a202c; /* Dark text */
+            justify-content: space-evenly; /* Distribute space for character and stroke order */
+        }
+
+        .flashcard-back {
+            background-color: #fefcbf; /* Light yellow for back */
+            color: #1a202c; /* Dark text */
+            transform: rotateY(180deg); /* Initial rotation for back */
+            justify-content: space-evenly; /* Distribute space for image and word */
+        }
+
+        /* Character styling */
+        .character {
+            /* Adjusted font-size for better fitting and responsiveness */
+            font-size: clamp(8rem, 20vw, 12rem); /* Min 8rem, max 12rem, scales with viewport width */
+            font-weight: bold;
+            line-height: 1; /* Adjust line height */
+            margin-bottom: 10px; /* Space between character and stroke order */
+        }
+
+        /* Stroke order image styling */
+        .stroke-order-guide {
+            width: 80%; /* Adjust width as needed */
+            max-height: 30%; /* Limit height to prevent dominating */
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Image styling */
+        .card-image {
+            max-width: 90%;
+            max-height: 60%; /* Give space for word below */
+            object-fit: contain; /* Ensure image fits without distortion */
+            border-radius: 10px; /* Slightly rounded image corners */
+            margin-bottom: 10px; /* Space between image and word */
+        }
+
+        /* Word styling */
+        .word {
+            font-size: 2.5rem; /* Larger font for word */
+            font-weight: 600;
+            color: #333;
+        }
+
+        /* Navigation buttons */
+        .nav-buttons {
+            display: flex;
+            gap: 20px; /* Space between buttons */
+            margin-top: 30px; /* Space above buttons */
+            width: 100%; /* Take full width of container */
+            justify-content: center;
+        }
+
+        .nav-button {
+            background-color: #4299e1; /* Blue */
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px; /* Rounded corners */
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: none;
+            outline: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-button:hover {
+            background-color: #3182ce; /* Darker blue */
+            transform: translateY(-2px); /* Slight lift effect */
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .nav-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-button:disabled {
+            background-color: #a0aec0; /* Gray for disabled */
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+            .flashcard-container {
+                width: 280px;
+                height: 480px; /* Adjusted height for smaller screens */
+            }
+            .character {
+                font-size: clamp(6rem, 15vw, 10rem); /* Smaller font on small screens */
+            }
+            .word {
+                font-size: 2rem;
+            }
+            .nav-button {
+                padding: 10px 20px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="flashcard-container">
+        <div id="flashcard" class="flashcard">
+            <div id="flashcard-front" class="flashcard-face flashcard-front">
+                <span id="character" class="character"></span>
+                <div class="flex flex-col items-center mt-4">
+                    <p class="text-lg font-semibold text-gray-700 mb-2">Thứ tự nét viết:</p>
+                    <img id="stroke-order-image" class="stroke-order-guide" src="" alt="Hướng dẫn nét viết">
+                </div>
+            </div>
+            <div id="flashcard-back" class="flashcard-face flashcard-back">
+                <img id="card-image" class="card-image" src="" alt="Hình minh họa từ vựng">
+                <span id="word" class="word"></span>
+            </div>
+        </div>
+        <div class="nav-buttons">
+            <button id="prevButton" class="nav-button">&larr; Trước</button>
+            <button id="nextButton" class="nav-button">Sau &rarr;</button>
+        </div>
+    </div>
+
+    <script>
+        // Array of flashcard data: character, associated Japanese word, image URL for meaning, and stroke order image URL.
+        // Placeholder images are used. In a real app, you would replace these with actual images.
+        const flashcards = [
+            {
+                character: "あ",
+                japaneseWord: "あめ",
+                meaningImage: "https://placehold.co/400x300/F0F8FF/000000?text=%C4%90%E1%BB%93ng+xu", // Placeholder: Image of a coin
+                strokeOrderImage: "https://placehold.co/200x150/CCE5FF/000000?text=Th%E1%BB%A9+t%E1%BB%B1+vi%E1%BA%BFt+%E3%81%82" // Placeholder for あ stroke order
+            },
+            {
+                character: "い",
+                japaneseWord: "いぬ",
+                meaningImage: "https://placehold.co/400x300/F0F8FF/000000?text=Ch%C3%B3", // Placeholder: Image of a dog
+                strokeOrderImage: "https://placehold.co/200x150/CCE5FF/000000?text=Th%E1%BB%A9+t%E1%BB%B1+vi%E1%BA%BFt+%E3%81%84" // Placeholder for い stroke order
+            },
+            {
+                character: "う",
+                japaneseWord: "うみ",
+                meaningImage: "https://placehold.co/400x300/F0F8FF/000000?text=Bi%E1%BB%83n", // Placeholder: Image of the sea
+                strokeOrderImage: "https://placehold.co/200x150/CCE5FF/000000?text=Th%E1%BB%A9+t%E1%BB%B1+vi%E1%BA%BFt+%E3%81%86" // Placeholder for う stroke order
+            },
+            {
+                character: "え",
+                japaneseWord: "えき",
+                meaningImage: "https://placehold.co/400x300/F0F8FF/000000?text=Ga+t%C3%A0u", // Placeholder: Image of a train station
+                strokeOrderImage: "https://placehold.co/200x150/CCE5FF/000000?text=Th%E1%BB%A9+t%E1%BB%B1+vi%E1%BA%BFt+%E3%81%88" // Placeholder for え stroke order
+            },
+            {
+                character: "お",
+                japaneseWord: "おとこ",
+                meaningImage: "https://placehold.co/400x300/F0F8FF/000000?text=%C4%90%C3%A0n+%C3%B4ng", // Placeholder: Image of a man
+                strokeOrderImage: "https://placehold.co/200x150/CCE5FF/000000?text=Th%E1%BB%A9+t%E1%BB%B1+vi%E1%BA%BFt+%E3%81%8A" // Placeholder for お stroke order
+            }
+        ];
+
+        let currentCardIndex = 0; // Tracks the current flashcard being displayed
+        let isFlipped = false;    // Tracks if the card is currently flipped to the back side
+
+        // Get references to HTML elements
+        const flashcardElement = document.getElementById('flashcard');
+        const characterElement = document.getElementById('character');
+        const strokeOrderImageElement = document.getElementById('stroke-order-image');
+        const meaningImageElement = document.getElementById('card-image');
+        const wordElement = document.getElementById('word');
+        const prevButton = document.getElementById('prevButton');
+        const nextButton = document.getElementById('nextButton');
+
+        /**
+         * Updates the content of the flashcard based on the currentCardIndex.
+         * Sets the character and stroke order image for the front,
+         * and meaning image/Japanese word for the back.
+         */
+        function updateCardContent() {
+            const currentCard = flashcards[currentCardIndex];
+
+            // Update front face content (character and stroke order guide)
+            characterElement.textContent = currentCard.character;
+            strokeOrderImageElement.src = currentCard.strokeOrderImage;
+            strokeOrderImageElement.alt = `Hướng dẫn nét viết của chữ ${currentCard.character}`;
+            // Fallback for stroke order image in case of loading error
+            strokeOrderImageElement.onerror = () => {
+                strokeOrderImageElement.src = `https://placehold.co/200x150/CCCCCC/000000?text=L%E1%BB%97i+t%E1%BA%A3i+%E1%BA%A3nh+n%C3%A9t+vi%E1%BA%BFt`;
+            };
+
+            // Update back face content (meaning image and Japanese word)
+            wordElement.textContent = currentCard.japaneseWord;
+            meaningImageElement.src = currentCard.meaningImage;
+            meaningImageElement.alt = `Hình minh họa cho từ "${currentCard.japaneseWord}"`;
+            // Fallback for meaning image in case of loading error
+            meaningImageElement.onerror = () => {
+                meaningImageElement.src = "https://placehold.co/400x300/CCCCCC/000000?text=L%E1%BB%97i+t%E1%BA%A3i+%E1%BA%A3nh";
+            };
+
+            // Reset flipped state if the card was flipped, and update button states
+            if (isFlipped) {
+                flashcardElement.classList.remove('flipped');
+                isFlipped = false;
+            }
+            updateButtonStates();
+        }
+
+        /**
+         * Toggles the 'flipped' class on the flashcard element to animate the flip.
+         * This function is called when the flashcard itself is clicked.
+         */
+        function flipCard() {
+            flashcardElement.classList.toggle('flipped');
+            isFlipped = !isFlipped;
+        }
+
+        /**
+         * Moves to the next flashcard in the array.
+         * If at the end of the array, it wraps around to the beginning, creating a continuous loop.
+         */
+        function showNextCard() {
+            currentCardIndex = (currentCardIndex + 1) % flashcards.length;
+            updateCardContent();
+        }
+
+        /**
+         * Moves to the previous flashcard in the array.
+         * If at the beginning of the array, it wraps around to the end, creating a continuous loop.
+         */
+        function showPrevCard() {
+            currentCardIndex = (currentCardIndex - 1 + flashcards.length) % flashcards.length;
+            updateCardContent();
+        }
+
+        /**
+         * Updates the enabled/disabled state of the navigation buttons.
+         * In this current implementation (wrapping around flashcards), buttons are always enabled.
+         * This function would be more critical if the navigation stopped at the first/last card.
+         */
+        function updateButtonStates() {
+            prevButton.disabled = false;
+            nextButton.disabled = false;
+        }
+
+        // Add event listeners to the flashcard and navigation buttons
+        flashcardElement.addEventListener('click', flipCard);
+        nextButton.addEventListener('click', showNextCard);
+        prevButton.addEventListener('click', showPrevCard);
+
+        // Initial load: Display the content of the first flashcard when the window loads
+        window.onload = updateCardContent;
+    </script>
+</body>
+</html>
